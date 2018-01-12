@@ -118,6 +118,7 @@ workflows:
         - webhook_url: $SLACK_WEBHOOK_URL
         - channel: $SLACK_CHANNEL
         - from_username: step-dev-test
+        - notify_only_on_error: "no"
         - link_names: "yes"
         - message: |
             First, On Success test

@@ -151,6 +151,16 @@ inputs:
         leave this option empty then the default one will be used.
       is_expand: true
       is_required: false
+  - notify_only_on_error: "no"
+    opts:
+      title: "Notify only on error"
+      description: |
+        Message will be sent only in case of build error
+      is_expand: true
+      is_required: false
+      value_options:
+      - "yes"
+      - "no"
   - link_names: "yes"
     opts:
       title: "Link Names"

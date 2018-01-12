@@ -2,7 +2,7 @@
 set -e
 THIS_SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-go_package_name="github.com/bitrise-io/steps-slack-message"
+go_package_name="github.com/Narfss/steps-slack-message"
 full_package_path="${THIS_SCRIPT_DIR}/go/src/${go_package_name}"
 mkdir -p "${full_package_path}"
 
