@@ -268,7 +268,7 @@ func main() {
 		fmt.Println("JSON payload: ", reqParamsJSONString)
 	}
 
-	if (config.NotifyOnlyOnError && configs.IsBuildFailed) {
+	if ((config.NotifyOnlyOnError && configs.IsBuildFailed) || (!config.NotifyOnlyOnError)) {
 		//
 		// send request
 		resp, err := http.PostForm(requestURL,
