@@ -31,6 +31,7 @@ type ConfigsModel struct {
 	EmojiOnError        string
 	IconURL             string
 	IconURLOnError      string
+	NotifyOnlyOnError   bool
 	IsLinkNames         bool
 	// Other Inputs
 	IsDebugMode bool
@@ -54,6 +55,7 @@ func createConfigsModelFromEnvs() ConfigsModel {
 		ImageURLOnError:     os.Getenv("image_url_on_error"),
 		IconURL:             os.Getenv("icon_url"),
 		IconURLOnError:      os.Getenv("icon_url_on_error"),
+		NotifyOnlyOnError:   os.Getenv("notify_only_on_error") == "yes",
 		IsLinkNames:         os.Getenv("link_names") == "yes",
 		//
 		IsDebugMode: (os.Getenv("is_debug_mode") == "yes"),
@@ -79,6 +81,7 @@ func (configs ConfigsModel) print() {
 	fmt.Println(" - EmojiOnError:", configs.EmojiOnError)
 	fmt.Println(" - IconURL:", configs.IconURL)
 	fmt.Println(" - IconURLOnError:", configs.IconURLOnError)
+	fmt.Println(" - NotifyOnlyOnError:", configs.NotifyOnlyOnError)
 	fmt.Println(" - IsLinkNames:", configs.IsLinkNames)
 	fmt.Println("")
 	fmt.Println(colorstring.Blue("Other configs:"))
@@ -122,6 +125,7 @@ type RequestParams struct {
 	Username  *string `json:"username"`
 	EmojiIcon *string `json:"icon_emoji"`
 	IconURL   *string `json:"icon_url"`
+	NotifyOnlyOnError int     `json:"notify_only_on_error"`
 	LinkNames int     `json:"link_names"`
 }
 
@@ -216,6 +220,10 @@ func CreatePayloadParam(configs ConfigsModel) (string, error) {
 		reqParams.EmojiIcon = nil
 	}
 
+	if configs.NotifyOnlyOnError {
+		reqParams.NotifyOnlyOnError = 1
+	}
+
 	if configs.IsLinkNames {
 		reqParams.LinkNames = 1
 	}
@@ -260,35 +268,41 @@ func main() {
 		fmt.Println("JSON payload: ", reqParamsJSONString)
 	}
 
-	//
-	// send request
-	resp, err := http.PostForm(requestURL,
-		url.Values{"payload": []string{reqParamsJSONString}})
-	if err != nil {
-		fmt.Println(colorstring.Red("Failed to send the request:"), err)
-		os.Exit(1)
-	}
+	if (config.NotifyOnlyOnError && configs.IsBuildFailed) {
+		//
+		// send request
+		resp, err := http.PostForm(requestURL,
+			url.Values{"payload": []string{reqParamsJSONString}})
+		if err != nil {
+			fmt.Println(colorstring.Red("Failed to send the request:"), err)
+			os.Exit(1)
+		}
 
-	//
-	// process the response
-	body, err := ioutil.ReadAll(resp.Body)
-	bodyStr := string(body)
-	resp.Body.Close()
+		//
+		// process the response
+		body, err := ioutil.ReadAll(resp.Body)
+		bodyStr := string(body)
+		resp.Body.Close()
 
-	if resp.StatusCode != 200 || bodyStr != "ok" {
-		fmt.Println()
-		fmt.Println(colorstring.Red("Request failed"))
-		fmt.Println("Response from Slack: ", bodyStr)
-		fmt.Println()
-		os.Exit(1)
-	}
+		if resp.StatusCode != 200 || bodyStr != "ok" {
+			fmt.Println()
+			fmt.Println(colorstring.Red("Request failed"))
+			fmt.Println("Response from Slack: ", bodyStr)
+			fmt.Println()
+			os.Exit(1)
+		}
 
-	if configs.IsDebugMode {
+		if configs.IsDebugMode {
+			fmt.Println()
+			fmt.Println("Response from Slack: ", bodyStr)
+		}
 		fmt.Println()
-		fmt.Println("Response from Slack: ", bodyStr)
+		fmt.Println(colorstring.Green("Slack message successfully sent! 🚀"))
+		fmt.Println()
+	} else {
+		fmt.Println()
+		fmt.Println(colorstring.Green("Slack message was not sent! "))
+		fmt.Println()
 	}
-	fmt.Println()
-	fmt.Println(colorstring.Green("Slack message successfully sent! 🚀"))
-	fmt.Println()
 	os.Exit(0)
 }
